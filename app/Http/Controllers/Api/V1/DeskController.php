@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Desk\StoreRequest;
 use App\Http\Resources\DeskResource;
 use App\Models\Desk;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use function response;
 
 class DeskController extends Controller
 {
