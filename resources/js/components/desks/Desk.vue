@@ -1,7 +1,7 @@
 <template>
     <div class="container">
         <h1>Доски</h1>
-        <form>
+        <form @submit.prevent="addNewDesk" >
             <input type="text" v-model="name" class="form-control" placeholder="Название доски"
                    :class="{ 'is-invalid': $v.name.$error }">
             <div class="invalid-feedback" v-if="!$v.name.required">
@@ -10,7 +10,7 @@
             <div class="invalid-feedback" v-if="!$v.name.maxLength">
                 Максимальное количество символов: {{ $v.name.$params.maxLength.max }}
             </div>
-            <button type="submit" @click.prevent="addNewDesk" class="btn btn-primary mt-3">Добавить</button>
+            <button type="submit" class="btn btn-primary mt-3">Добавить</button>
         </form>
         <div class="alert alert-danger mt-3" role="alert" v-if="errored">
             Ошибка загрузки данных! <br>

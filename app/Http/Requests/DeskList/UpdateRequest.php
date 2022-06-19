@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Desk;
+namespace App\Http\Requests\DeskList;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreRequest extends FormRequest
+class UpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,14 +24,7 @@ class StoreRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required|max:255|unique:desks,name,' . $this->desk->id
-        ];
-    }
-
-    public function messages()
-    {
-        return [
-            'name.unique' => 'Доска с таким именем уже существует!'
+            'name' => 'required|max:255'
         ];
     }
 }
