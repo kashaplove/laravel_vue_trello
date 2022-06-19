@@ -17,8 +17,5 @@
 </body>
 </html>
 <script>
-    import App from "../js/components/App";
-    export default {
-        components: {App}
-    }
+
 </script>
