@@ -51,7 +51,7 @@
                             <div class="card-body">
                                 <h5 class="card-title d-flex justify-content-between align-items-center mb-3"
                                     style="cursor:pointer;">{{ card.name }}</h5>
-                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                                <button type="button" @click.prevent="getCard(card.id)" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
                                     Открыть
                                 </button>
                                 <button @click.prevent="deleteCard(card.id)" type="button" class="btn btn-secondary">Удалить</button>
@@ -70,7 +70,17 @@
                             <div class="modal-dialog modal-lg">
                                 <div class="modal-content">
                                     <div class="modal-header">
-                                        <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                                        <form @submit.prevent="updateCardName" v-if="show_card_name_input" class="d-flex justify-content-between align-items-center">
+                                            <input type="text" v-model="current_card.name" class="form-control" placeholder="Название задачи" :class="{ 'is-invalid': $v.current_card.name.$error }">
+                                            <div class="invalid-feedback" v-if="!$v.current_card.name.required">
+                                                Это обязательное поле
+                                            </div>
+                                            <div class="invalid-feedback" v-if="!$v.current_card.name.maxLength">
+                                                Максимальное количество символов: {{ $v.current_card.name.$params.maxLength.max }}
+                                            </div>
+                                            <button type="button" class="btn-close" @click.prevent="show_card_name_input = false" aria-label="Close"></button>
+                                        </form>
+                                        <h5 @click.prevent="show_card_name_input = true" class="modal-title" v-if="!show_card_name_input" id="exampleModalLabel" style="cursor:pointer;">{{ current_card.name }} <i class="fas fa-pen" style="font-size: 15px; margin-left: 20px;"></i></h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
                                     <div class="modal-body">
@@ -106,6 +116,8 @@ export default {
             desk_lists: null,
             desk_list_input_id: null,
             card_names: [],
+            current_card: [],
+            show_card_name_input: false,
         }
     },
     mounted() {
@@ -255,6 +267,43 @@ export default {
                 .finally(() => {
                     this.loading = false
                 })
+        },
+
+        getCard(id) {
+            axios.get('/api/V1/cards/' + id)
+                .then(res => {
+                    this.current_card = res.data.data
+                })
+                .catch(err => {
+                    this.errored = true
+                })
+                .finally(() => {
+                    this.loading = false
+                })
+        },
+
+        updateCardName() {
+            this.$v.current_card.name.$touch()
+            if (this.$v.current_card.name.$anyError) {
+                return;
+            }
+            axios.post('/api/V1/cards/' + this.current_card.id, {
+                _method: 'PUT',
+                name: this.current_card.name,
+                desk_list_id: this.current_card.desk_list_id,
+            })
+                .then(res => {
+                    this.$v.$reset()
+                    this.show_card_name_input = false
+                    this.getDeskLists()
+                })
+                .catch(err => {
+                    this.errored = true
+                    console.log(err);
+                })
+                .finally(() => {
+                    this.loading = false
+                })
         }
     },
     validations: {
@@ -268,6 +317,12 @@ export default {
         },
         card_names: {
             $each: {
+                required,
+                maxLength: maxLength(255)
+            }
+        },
+        current_card: {
+            name: {
                 required,
                 maxLength: maxLength(255)
             }
