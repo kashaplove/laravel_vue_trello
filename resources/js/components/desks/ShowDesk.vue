@@ -49,9 +49,12 @@
                         <div v-for="card in desk_list.cards" :key="card.id" class="card mt-3 bg-light"
                              style="width: 18rem;">
                             <div class="card-body">
-                                <h5 class="card-title d-flex justify-content-between align-items-center"
+                                <h5 class="card-title d-flex justify-content-between align-items-center mb-3"
                                     style="cursor:pointer;">{{ card.name }}</h5>
-                                <button type="button" class="btn btn-secondary mt-3">Удалить</button>
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                                    Открыть
+                                </button>
+                                <button @click.prevent="deleteCard(card.id)" type="button" class="btn btn-secondary">Удалить</button>
                             </div>
                         </div>
                         <form @submit.prevent="addNewCard(desk_list.id)" class="mt-3">
@@ -63,6 +66,19 @@
                                 Макс. количество символов: {{ $v.card_names.$each[desk_list.id].$params.maxLength.max }}.
                             </div>
                         </form>
+                        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        ...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -220,6 +236,20 @@ export default {
                 })
                 .catch(err => {
                     // this.card_names[desk_list_id] = null
+                    this.errored = true
+                })
+                .finally(() => {
+                    this.loading = false
+                })
+        },
+        deleteCard(id) {
+            axios.post('/api/V1/cards/' + id, {
+                _method: 'DELETE',
+            })
+                .then(res => {
+                    this.getDeskLists()
+                })
+                .catch(err => {
                     this.errored = true
                 })
                 .finally(() => {

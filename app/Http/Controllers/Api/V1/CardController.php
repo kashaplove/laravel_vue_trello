@@ -7,6 +7,7 @@ use App\Http\Requests\Card\StoreRequest;
 use App\Http\Resources\CardResource;
 use App\Models\Card;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class CardController extends Controller
 {
@@ -61,8 +62,9 @@ class CardController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Card $card)
     {
-        //
+        $card->delete();
+        return response(null, Response::HTTP_NO_CONTENT);
     }
 }
