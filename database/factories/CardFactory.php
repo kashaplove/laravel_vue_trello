@@ -17,7 +17,8 @@ class CardFactory extends Factory
     public function definition()
     {
         return [
-            //
+            'name' => $this->faker->sentence,
+            'desk_list_id' => $this->faker->numberBetween(1,50)
         ];
     }
 }

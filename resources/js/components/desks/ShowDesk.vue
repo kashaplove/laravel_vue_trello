@@ -21,27 +21,51 @@
             </div>
             <button type="submit" class="btn btn-primary mt-3">Добавить</button>
         </form>
+
+        <div class="alert alert-danger" role="alert" v-if="errored">
+            Ошибка загрузки данных!
+        </div>
         <div class="row">
             <div v-for="desk_list in desk_lists" class="col-lg-4">
                 <div class="card mt-3">
                     <div class="card-body">
-                        <form @submit.prevent="updateDeskList(desk_list.id,desk_list.name)" v-if="desk_list_input_id === desk_list.id" class="d-flex align-items-center">
-                            <input type="text" v-model="desk_list.name" class="form-control" placeholder="Название задачи"
+
+                        <form @submit.prevent="updateDeskList(desk_list.id,desk_list.name)"
+                              v-if="desk_list_input_id === desk_list.id" class="d-flex align-items-center">
+                            <input type="text" v-model="desk_list.name" class="form-control"
+                                   placeholder="Название задачи"
                                    :class="{ 'is-invalid': $v.desk_list_name.$error }">
-                            <button @click="desk_list_input_id = null" type="button" class="btn-close" aria-label="Close"></button>
+                            <button @click="desk_list_input_id = null" type="button" class="btn-close"
+                                    aria-label="Close"></button>
                         </form>
-                        <h4 v-else @click="desk_list_input_id = desk_list.id" class="card-title d-flex justify-content-between align-items-center" style="cursor: pointer;">
+                        <h4 v-else @click="desk_list_input_id = desk_list.id"
+                            class="card-title d-flex justify-content-between align-items-center"
+                            style="cursor: pointer;">
                             {{ desk_list.name }}<i class="fas fa-pen" style="font-size: 15px;"></i></h4>
+                        <button @click.prevent="deleteDeskList(desk_list.id)" type="button"
+                                class="btn btn-outline-danger mt-3">
+                            Удалить
+                        </button>
+                        <div v-for="card in desk_list.cards" :key="card.id" class="card mt-3 bg-light"
+                             style="width: 18rem;">
+                            <div class="card-body">
+                                <h5 class="card-title d-flex justify-content-between align-items-center"
+                                    style="cursor:pointer;">{{ card.name }}</h5>
+                                <button type="button" class="btn btn-secondary mt-3">Удалить</button>
+                            </div>
+                        </div>
+                        <form @submit.prevent="addNewCard(desk_list.id)" class="mt-3">
+                            <input type="text" v-model="card_names[desk_list.id]" class="form-control" placeholder="Название карточки" :class="{ 'is-invalid': $v.card_names.$each[desk_list.id].$error }">
+                            <div class="invalid-feedback" v-if="!$v.card_names.$each[desk_list.id].required">
+                                Это обязательное поле
+                            </div>
+                            <div class="invalid-feedback" v-if="!$v.card_names.$each[desk_list.id].maxLength">
+                                Макс. количество символов: {{ $v.card_names.$each[desk_list.id].$params.maxLength.max }}.
+                            </div>
+                        </form>
                     </div>
-                    <button @click.prevent="deleteDeskList(desk_list.id)" type="button"
-                            class="btn btn-outline-danger mt-3">
-                        Удалить
-                    </button>
                 </div>
             </div>
-        </div>
-        <div class="alert alert-danger" role="alert" v-if="errored">
-            Ошибка загрузки данных!
         </div>
         <div class="spinner-grow text-warning" role="status" v-if="loading">
             <span class="visually-hidden">Loading...</span>
@@ -65,6 +89,7 @@ export default {
             loading: true,
             desk_lists: null,
             desk_list_input_id: null,
+            card_names: [],
         }
     },
     mounted() {
@@ -110,7 +135,10 @@ export default {
                 }
             })
                 .then(res => {
-                    this.desk_lists = res.data.data;
+                    this.desk_lists = res.data.data
+                    this.desk_lists.forEach(el => {
+                        this.$set(this.card_names, el.id, '')
+                    })
                 })
                 .catch(err => {
                     this.errored = true
@@ -120,8 +148,8 @@ export default {
                 })
         },
         addNewDeskList() {
-            this.$v.$touch()
-            if (this.$v.$anyError) {
+            this.$v.desk_list_name.$touch()
+            if (this.$v.desk_list_name.$anyError) {
                 return;
             }
             axios.post('/api/V1/desk_lists/', {
@@ -129,16 +157,14 @@ export default {
                 desk_id: this.id
             })
                 .then(res => {
+                    this.$v.$reset()
                     this.desk_list_name = ''
                     this.desk_lists = []
                     this.getDeskLists()
                 })
                 .catch(err => {
                     this.errored = true
-                    // if (err.response.data.errors.name) {
-                    //     this.errors = []
-                    //     this.errors.push(err.response.data.errors.name[0])
-                    // }
+
                 })
                 .finally(() => {
                     this.loading = false
@@ -164,7 +190,7 @@ export default {
             }
         },
         updateDeskList(id, name) {
-            axios.post('/api/V1/desk_lists/'+id, {
+            axios.post('/api/V1/desk_lists/' + id, {
                 _method: 'PUT',
                 name
             })
@@ -172,6 +198,28 @@ export default {
                     this.desk_list_input_id = null
                 })
                 .catch(err => {
+                    this.errored = true
+                })
+                .finally(() => {
+                    this.loading = false
+                })
+        },
+
+        addNewCard(desk_list_id) {
+            this.$v.card_names.$each[desk_list_id].$touch()
+            if (this.$v.card_names.$each[desk_list_id].$anyError) {
+                return;
+            }
+            axios.post('/api/V1/cards/', {
+                name: this.card_names[desk_list_id],
+                desk_list_id
+            })
+                .then(res => {
+                    this.$v.$reset()
+                    this.getDeskLists()
+                })
+                .catch(err => {
+                    // this.card_names[desk_list_id] = null
                     this.errored = true
                 })
                 .finally(() => {
@@ -187,6 +235,12 @@ export default {
         desk_list_name: {
             required,
             maxLength: maxLength(255)
+        },
+        card_names: {
+            $each: {
+                required,
+                maxLength: maxLength(255)
+            }
         }
     }
 

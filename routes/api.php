@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\CardController;
 use App\Http\Controllers\Api\V1\DeskController;
 use App\Http\Controllers\Api\V1\DeskListController;
 use Illuminate\Http\Request;
@@ -23,4 +24,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::apiResources([
     'desks' => DeskController::class,
     'desk_lists' => DeskListController::class,
+    'cards' => CardController::class,
 ]);
