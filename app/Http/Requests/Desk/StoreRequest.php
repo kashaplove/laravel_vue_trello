@@ -24,7 +24,14 @@ class StoreRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required|max:255'
+            'name' => 'required|max:255|unique:desks,name'
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'name.unique' => 'Доска с таким именем уже существует!'
         ];
     }
 }
