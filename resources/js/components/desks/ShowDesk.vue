@@ -93,11 +93,11 @@
                                     </div>
                                     <div class="modal-body">
                                         <div class="form-check d-flex" v-for="(task, index) in current_card.tasks">
-                                            <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
+                                            <input v-model="current_card.tasks[index].is_done" @change="updateTask(current_card.tasks[index])" class="form-check-input" type="checkbox" value="" :id="'flexCheckDefault'+index">
                                             <form @submit.prevent="updateTask(current_card.tasks[index])" v-if="task_input_name_id === task.id">
                                                 <input v-model="current_card.tasks[index].name" type="text" class="form-control w-50 ml-3" placeholder="Название задачи">
                                             </form>
-                                            <label v-else class="form-check-label" for="flexCheckDefault" style="margin-left: 10px;">
+                                            <label v-else class="form-check-label" :for="'flexCheckDefault'+index" style="margin-left: 10px;">
                                                 {{ task.name }}
                                             </label>
                                             <span @click.prevent="task_input_name_id = task.id" v-if="task_input_name_id !== task.id" >
@@ -393,9 +393,6 @@ export default {
             })
                 .then(res => {
                     this.task_input_name_id = null
-                    // this.$v.$reset()
-                    // this.show_card_name_input = false
-                    // this.getDeskLists()
                 })
                 .catch(err => {
                     this.errored = true
