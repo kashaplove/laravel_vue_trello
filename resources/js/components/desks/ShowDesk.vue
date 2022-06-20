@@ -79,7 +79,7 @@
                                 <div class="modal-content">
                                     <div class="modal-header">
                                         <form @submit.prevent="updateCardName" v-if="show_card_name_input" class="d-flex justify-content-between align-items-center">
-                                            <input type="text" v-model="current_card.name" class="form-control" placeholder="Название задачи" :class="{ 'is-invalid': $v.current_card.name.$error }">
+                                            <input type="text" v-model="current_card.name" class="form-control" placeholder="Название карточки" :class="{ 'is-invalid': $v.current_card.name.$error }">
                                             <div class="invalid-feedback" v-if="!$v.current_card.name.required">
                                                 Это обязательное поле
                                             </div>
@@ -92,11 +92,17 @@
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
                                     <div class="modal-body">
-                                        <div class="form-check d-flex" v-for="task in current_card.tasks">
+                                        <div class="form-check d-flex" v-for="(task, index) in current_card.tasks">
                                             <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
-                                            <label class="form-check-label" for="flexCheckDefault" style="margin-left: 10px;">
+                                            <form @submit.prevent="updateTask(current_card.tasks[index])" v-if="task_input_name_id === task.id">
+                                                <input v-model="current_card.tasks[index].name" type="text" class="form-control w-50 ml-3" placeholder="Название задачи">
+                                            </form>
+                                            <label v-else class="form-check-label" for="flexCheckDefault" style="margin-left: 10px;">
                                                 {{ task.name }}
                                             </label>
+                                            <span @click.prevent="task_input_name_id = task.id" v-if="task_input_name_id !== task.id" >
+                                                <i class="fas fa-pen" style="font-size: 15px; margin-left: 10px; cursor: pointer"></i>
+                                            </span>
                                             <button type="button" class="btn-close align-self-center" @click.prevent="deleteTask(task.id)" aria-label="Close" style="margin-left: 10px">
                                                 <span aria-hidden="true"></span>
                                             </button>
@@ -144,6 +150,7 @@ export default {
             current_card: [],
             show_card_name_input: false,
             new_task_name: null,
+            task_input_name_id: null,
         }
     },
     mounted() {
@@ -371,6 +378,28 @@ export default {
                 })
                 .catch(err => {
                     this.errored = true
+                })
+                .finally(() => {
+                    this.loading = false
+                })
+        },
+
+        updateTask(task) {
+            axios.post('/api/V1/tasks/' + task.id, {
+                _method: 'PATCH',
+                name: task.name,
+                is_done: task.is_done,
+                card_id: this.current_card.id,
+            })
+                .then(res => {
+                    this.task_input_name_id = null
+                    // this.$v.$reset()
+                    // this.show_card_name_input = false
+                    // this.getDeskLists()
+                })
+                .catch(err => {
+                    this.errored = true
+                    console.log(err);
                 })
                 .finally(() => {
                     this.loading = false
