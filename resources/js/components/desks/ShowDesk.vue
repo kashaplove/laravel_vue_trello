@@ -92,11 +92,14 @@
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
                                     <div class="modal-body">
-                                        <div class="form-check" v-for="task in current_card.tasks">
+                                        <div class="form-check d-flex" v-for="task in current_card.tasks">
                                             <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
-                                            <label class="form-check-label" for="flexCheckDefault">
+                                            <label class="form-check-label" for="flexCheckDefault" style="margin-left: 10px;">
                                                 {{ task.name }}
                                             </label>
+                                            <button type="button" class="btn-close align-self-center" @click.prevent="deleteTask(task.id)" aria-label="Close" style="margin-left: 10px">
+                                                <span aria-hidden="true"></span>
+                                            </button>
                                         </div>
                                         <form @submit.prevent="addNewTask" class="mt-3">
                                             <input type="text" v-model="new_task_name" class="form-control" placeholder="Название задачи" :class="{ 'is-invalid': $v.new_task_name.$error }">
@@ -352,6 +355,21 @@ export default {
                 })
                 .catch(err => {
                     // this.card_names[desk_list_id] = null
+                    this.errored = true
+                })
+                .finally(() => {
+                    this.loading = false
+                })
+        },
+
+        deleteTask(id) {
+            axios.post('/api/V1/tasks/' + id, {
+                _method: 'DELETE',
+            })
+                .then(res => {
+                    this.getCard(this.current_card.id)
+                })
+                .catch(err => {
                     this.errored = true
                 })
                 .finally(() => {
