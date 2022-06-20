@@ -25,19 +25,27 @@
         <div class="alert alert-danger" role="alert" v-if="errored">
             Ошибка загрузки данных!
         </div>
+
+
+
+
         <div class="row">
-            <div v-for="desk_list in desk_lists" class="col-lg-4">
+            <div class="col-lg-4" v-for="(desk_list, index) in desk_lists" :key="desk_list.id">
                 <div class="card mt-3">
                     <div class="card-body">
 
-                        <form @submit.prevent="updateDeskList(desk_list.id,desk_list.name)"
-                              v-if="desk_list_input_id === desk_list.id" class="d-flex align-items-center">
-                            <input type="text" v-model="desk_list.name" class="form-control"
-                                   placeholder="Название задачи"
-                                   :class="{ 'is-invalid': $v.desk_list_name.$error }">
-                            <button @click="desk_list_input_id = null" type="button" class="btn-close"
+                        <form @submit.prevent="updateDeskList(desk_list.id,desk_list.name)" v-if="desk_list_input_id === desk_list.id" class="d-flex align-items-center">
+                            <input type="text" v-model="desk_list.name" :class="{ 'is-invalid': $v.desk_lists.$each[index].name.$error }" class="form-control" placeholder="Название списка">
+                            <div class="invalid-feedback" v-if="!$v.desk_lists.$each[index].name.required">
+                                Это обязательное поле
+                            </div>
+                            <div class="invalid-feedback" v-if="!$v.desk_lists.$each[index].name.maxLength">
+                                Макс. количество символов: {{ $v.desk_lists.$each[index].name.$params.maxLength.max }}.
+                            </div>
+                            <button @click="updateDeskList" type="button" class="btn-close"
                                     aria-label="Close"></button>
                         </form>
+
                         <h4 v-else @click="desk_list_input_id = desk_list.id"
                             class="card-title d-flex justify-content-between align-items-center"
                             style="cursor: pointer;">
@@ -78,13 +86,27 @@
                                             <div class="invalid-feedback" v-if="!$v.current_card.name.maxLength">
                                                 Максимальное количество символов: {{ $v.current_card.name.$params.maxLength.max }}
                                             </div>
-                                            <button type="button" class="btn-close" @click.prevent="show_card_name_input = false" aria-label="Close"></button>
+                                            <button type="button" class="btn-close" @click.prevent="updateCardName" aria-label="Close"></button>
                                         </form>
                                         <h5 @click.prevent="show_card_name_input = true" class="modal-title" v-if="!show_card_name_input" id="exampleModalLabel" style="cursor:pointer;">{{ current_card.name }} <i class="fas fa-pen" style="font-size: 15px; margin-left: 20px;"></i></h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
                                     <div class="modal-body">
-                                        ...
+                                        <div class="form-check" v-for="task in current_card.tasks">
+                                            <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
+                                            <label class="form-check-label" for="flexCheckDefault">
+                                                {{ task.name }}
+                                            </label>
+                                        </div>
+                                        <form @submit.prevent="addNewTask" class="mt-3">
+                                            <input type="text" v-model="new_task_name" class="form-control" placeholder="Название задачи" :class="{ 'is-invalid': $v.new_task_name.$error }">
+                                            <div class="invalid-feedback" v-if="!$v.new_task_name.required">
+                                                Это обязательное поле
+                                            </div>
+                                            <div class="invalid-feedback" v-if="!$v.new_task_name.maxLength">
+                                                Максимальное количество символов: {{ $v.new_task_name.$params.maxLength.max }}
+                                            </div>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
@@ -118,6 +140,7 @@ export default {
             card_names: [],
             current_card: [],
             show_card_name_input: false,
+            new_task_name: null,
         }
     },
     mounted() {
@@ -218,6 +241,11 @@ export default {
             }
         },
         updateDeskList(id, name) {
+            this.$v.desk_lists.$touch()
+            if (this.$v.desk_lists.$anyError) {
+                return;
+            }
+            this.desk_list_input_id = null
             axios.post('/api/V1/desk_lists/' + id, {
                 _method: 'PUT',
                 name
@@ -276,6 +304,7 @@ export default {
                 })
                 .catch(err => {
                     this.errored = true
+                    console.log(err.response);
                 })
                 .finally(() => {
                     this.loading = false
@@ -287,6 +316,7 @@ export default {
             if (this.$v.current_card.name.$anyError) {
                 return;
             }
+            this.show_card_name_input = false
             axios.post('/api/V1/cards/' + this.current_card.id, {
                 _method: 'PUT',
                 name: this.current_card.name,
@@ -300,6 +330,29 @@ export default {
                 .catch(err => {
                     this.errored = true
                     console.log(err);
+                })
+                .finally(() => {
+                    this.loading = false
+                })
+        },
+
+        addNewTask() {
+            this.$v.new_task_name.$touch()
+            if (this.$v.new_task_name.$anyError) {
+                return;
+            }
+            axios.post('/api/V1/tasks/', {
+                name: this.new_task_name,
+                card_id: this.current_card.id
+            })
+                .then(res => {
+                    this.new_task_name = ''
+                    this.$v.$reset()
+                    this.getCard(this.current_card.id)
+                })
+                .catch(err => {
+                    // this.card_names[desk_list_id] = null
+                    this.errored = true
                 })
                 .finally(() => {
                     this.loading = false
@@ -326,6 +379,18 @@ export default {
                 required,
                 maxLength: maxLength(255)
             }
+        },
+        desk_lists: {
+            $each: {
+                name: {
+                    required,
+                    maxLength: maxLength(255)
+                }
+            }
+        },
+        new_task_name: {
+            required,
+            maxLength: maxLength(255)
         }
     }
 

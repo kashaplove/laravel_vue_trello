@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\CardController;
 use App\Http\Controllers\Api\V1\DeskController;
 use App\Http\Controllers\Api\V1\DeskListController;
+use App\Http\Controllers\Api\V1\TaskController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -25,4 +26,5 @@ Route::apiResources([
     'desks' => DeskController::class,
     'desk_lists' => DeskListController::class,
     'cards' => CardController::class,
+    'tasks' => TaskController::class,
 ]);

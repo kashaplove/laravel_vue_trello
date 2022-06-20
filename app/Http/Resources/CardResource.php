@@ -18,7 +18,8 @@ class CardResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'created_at' => $this->created_at,
-            'desk_list_id' => $this->desk_list_id
+            'desk_list_id' => $this->desk_list_id,
+            'tasks' => TaskResource::collection($this->tasks)
         ];
     }
 }

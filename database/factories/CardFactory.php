@@ -18,7 +18,7 @@ class CardFactory extends Factory
     {
         return [
             'name' => $this->faker->sentence,
-            'desk_list_id' => $this->faker->numberBetween(1,50)
+            'desk_list_id' => $this->faker->randomDigitNotZero()
         ];
     }
 }
