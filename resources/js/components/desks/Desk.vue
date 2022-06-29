@@ -94,6 +94,7 @@ export default {
                 name: this.name
             })
                 .then(res => {
+                    this.$v.$reset()
                     this.desks = []
                     this.getDesks()
                     this.name = ''
